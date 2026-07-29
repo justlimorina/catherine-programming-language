@@ -1,0 +1,29 @@
+define Student as struct {
+    define name, dob as string
+    define year as number
+    define gpa as number
+}
+
+define soLuong = 3, i as number
+define sv as Student[]
+
+echo "Nhap danh sach sinh vien"
+for i = 0, i < soLuong, up {
+    echo "Nhap thong tin sinh vien thu !{i + 1}"
+    echo "Nhap ten sinh vien"
+    listen sv[i].name
+    echo "Nhap ngay sinh"
+    listen sv[i].dob
+    echo "Sinh vien nay hoc nam thu may?"
+    listen sv[i].year
+    echo "Nhap diem GPA cua sinh vien"
+    listen sv[i].gpa
+    clear
+}
+
+echo "Thong tin sinh vien"
+for i = 0, i < soLuong, up {
+    echo "+++++++++++++++++++++++++++++++++++++++"
+    echo "Thong tin sinh vien thu !{i + 1}"
+    echo "Ten: !{sv[i].name} - Ngay sinh: !{sv[i].dob} - Nam thu: !{sv[i].year} - GPA: !{sv[i].gpa}"
+}

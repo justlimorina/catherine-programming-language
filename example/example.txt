@@ -1,0 +1,66 @@
+// basic function (including echo, basic arithmetic functions, variable assignment, strings, and comments)
+// NOTE: Data type in Catherine are number (including float, double, etc..), string and boolean.
+define a, b, c, d, g, h, x, y as number
+define e, f as string
+echo “Hello World”
+a = 1
+b = 2
+c = sum(a, b)
+e = “This is a draft”
+
+listen d
+listen f
+
+//if else statements with multiline continuation (NOTE: ef and else if are all valid)
+if c == 3 and 
+   d != 0 {
+	echo e
+	echo “The result of !{a} + !{b} is !{c}”
+	echo “Lmao, you’ve got richrolled. {LMAO}”
+} ef c == 4 or d == 0 {
+	echo “KEK!!!”
+} else {
+	echo “Invalid”
+}
+
+// "Repeat" function
+if f == “Hello World” {
+	repeat 10 {
+		echo f
+	}
+} else {
+	echo “!{f} is the correct phrase!”
+}
+
+// "While" and "Until" loop statements with "stop" and "skip"
+define count as number
+count = 0
+while count < 5 {
+	count = sum(count, 1)
+	if count == 3 {
+		skip
+	}
+	echo "Count is !{count}"
+}
+
+until count == 10 {
+	count = sum(count, 1)
+	if count == 8 {
+		stop
+	}
+}
+
+// Raw arithmetic expression with calc() (supports multiline inside parentheses)
+define total as number
+total = calc(
+	a + b * 
+	(c - 2)
+)
+echo "Total calculation: !{total}"
+
+// Self-definition function
+define func rectangle_perimeter(x, y) as number {
+	rectangle_perimeter = multi(sum(x, y), 2)
+}
+listen x, y
+echo rectangle_perimeter(x, y)

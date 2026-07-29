@@ -1,0 +1,52 @@
+define a, b, c, choice as number
+define is_running as boolean
+
+is_running = true
+
+while is_running == true {
+    clear
+    echo "Calculator using Catherine Programming language"
+    echo "1. Addition"
+    echo "2. Multiplication"
+    echo "3. Subtraction"
+    echo "4. Division"
+    echo "Enter your choice: "
+
+    listen choice
+
+    if choice == 1 {
+        echo "Enter your first number: "
+        listen a
+        echo "Enter your second number: "
+        listen b
+        echo "The result of !{a} + !{b} is !{calc(a + b)}"
+    } ef choice == 2 {
+        echo "Enter your first number: "
+        listen a
+        echo "Enter your second number: "
+        listen b
+        echo "The result of !{a} * !{b} is !{calc(a * b)}"
+    } ef choice == 3 {
+        echo "Enter your first number: "
+        listen a
+        echo "Enter your second number: "
+        listen b
+        echo "The result of !{a} - !{b} is !{calc(a - b)}"
+    } ef choice == 4 {
+        echo "Enter your first number: "
+        listen a
+        echo "Enter your second number: "
+        listen b
+        echo "The result of !{a} / !{b} is !{calc(a / b)}"
+    } else {
+        echo "Invalid choice"
+    }
+    echo "Continue? (true/false): "
+    listen is_running
+    if is_running == true {
+        clear
+        skip
+    }
+}
+clear
+echo "Goodbye!"
