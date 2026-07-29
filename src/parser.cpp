@@ -37,7 +37,7 @@ bool Parser::match(const std::vector<TokenType>& types) {
 
 Token Parser::consume(TokenType type, const std::string& message) {
     if (check(type)) return advance();
-    throw std::runtime_error("Parser Error on line " + std::to_string(peek().line) + ": " + message + " (found '" + peek().lexue + "')");
+    throw std::runtime_error("Parser Error on line " + std::to_string(peek().line) + ": " + message + " (found '" + peek().lexeme + "')");
 }
 
 void Parser::skipNewlines() {
@@ -84,67 +84,73 @@ std::shared_ptr<StmtAST> Parser::parseStatement() {
 }
 
 std::shared_ptr<StmtAST> Parser::parseDefine() {
-    // Check if struct definition: define StructName as struct { ... }
-    if (check(TokenType::IDENTIFIER)) {
-        Token nameToken = peek();
-        if (current + 2 < tokens.size() && tokens[current + 1].type == TokenType::KEYWORD_AS && tokens[current + 2].type == TokenType::KEYWORD_STRUCT) {
-            advance(); // name
-            advance(); // as
-            advance(); // struct
-            skipNewlines();
-            consume(TokenType::LBRACE, "Expected '{' in struct definition");
-            skipNewlines();
-            std::vector<std::shared_ptr<VarDefineStmtAST>> fields;
-            while (!check(TokenType::RBRACE) && !isAtEnd()) {
-                skipNewlines();
-                if (match({TokenType::KEYWORD_DEFINE})) {
-                    auto fieldStmt = std::dynamic_pointer_cast<VarDefineStmtAST>(parseDefine());
-                    if (fieldStmt) fields.push_back(fieldStmt);
-                }
-                skipNewlines();
-            }
-            consume(TokenType::RBRACE, "Expected '}' after struct definition");
-            return std::make_shared<StructDefStmtAST>(nameToken.lexue, fields);
-        }
+    if (check(TokenType::IDENTIFIER) && current + 2 < tokens.size() &&
+        tokens[current + 1].type == TokenType::KEYWORD_AS &&
+        tokens[current + 2].type == TokenType::KEYWORD_STRUCT) {
+        return parseStructDef();
     }
-
-    // Check if function definition: define func name(...) as type { ... }
     if (match({TokenType::KEYWORD_FUNC})) {
-        Token nameToken = consume(TokenType::IDENTIFIER, "Expected function name after 'define func'");
-        consume(TokenType::LPAREN, "Expected '(' after function name");
+        return parseFuncDef();
+    }
+    return parseVarDef();
+}
 
-        std::vector<std::string> params;
+std::shared_ptr<StmtAST> Parser::parseStructDef() {
+    std::string name = tokens[current].lexeme;
+    advance(); // name
+    advance(); // as
+    advance(); // struct
+    skipNewlines();
+    consume(TokenType::LBRACE, "Expected '{' in struct definition");
+    skipNewlines();
+    std::vector<std::shared_ptr<VarDefineStmtAST>> fields;
+    while (!check(TokenType::RBRACE) && !isAtEnd()) {
         skipNewlines();
-        if (!check(TokenType::RPAREN)) {
-            do {
-                skipNewlines();
-                Token param = consume(TokenType::IDENTIFIER, "Expected parameter name");
-                params.push_back(param.lexue);
-                skipNewlines();
-            } while (match({TokenType::COMMA}));
+        if (match({TokenType::KEYWORD_DEFINE})) {
+            auto fieldStmt = std::dynamic_pointer_cast<VarDefineStmtAST>(parseVarDef());
+            if (fieldStmt) fields.push_back(fieldStmt);
         }
         skipNewlines();
-        consume(TokenType::RPAREN, "Expected ')' after parameters");
-
-        consume(TokenType::KEYWORD_AS, "Expected 'as' after function signature");
-        Token typeToken = advance();
-
-        skipNewlines();
-        std::shared_ptr<BlockStmtAST> body = parseBlock();
-
-        return std::make_shared<FuncDefStmtAST>(nameToken.lexue, params, typeToken.lexue, body);
     }
+    consume(TokenType::RBRACE, "Expected '}' after struct definition");
+    return std::make_shared<StructDefStmtAST>(name, fields);
+}
 
-    // Variable declaration: define a, b as number OR define a == 3, b as number OR define sv as Student[]
+std::shared_ptr<StmtAST> Parser::parseFuncDef() {
+    Token nameToken = consume(TokenType::IDENTIFIER, "Expected function name after 'define func'");
+    consume(TokenType::LPAREN, "Expected '(' after function name");
+
+    std::vector<std::string> params;
+    skipNewlines();
+    if (!check(TokenType::RPAREN)) {
+        do {
+            skipNewlines();
+            Token param = consume(TokenType::IDENTIFIER, "Expected parameter name");
+            params.push_back(param.lexeme);
+            skipNewlines();
+        } while (match({TokenType::COMMA}));
+    }
+    skipNewlines();
+    consume(TokenType::RPAREN, "Expected ')' after parameters");
+
+    consume(TokenType::KEYWORD_AS, "Expected 'as' after function signature");
+    Token typeToken = advance();
+
+    skipNewlines();
+    std::shared_ptr<BlockStmtAST> body = parseBlock();
+
+    return std::make_shared<FuncDefStmtAST>(nameToken.lexeme, params, typeToken.lexeme, body);
+}
+
+std::shared_ptr<StmtAST> Parser::parseVarDef() {
     std::vector<std::string> varNames;
     std::shared_ptr<ExprAST> initVal = nullptr;
 
     do {
         skipNewlines();
         Token varToken = consume(TokenType::IDENTIFIER, "Expected variable name in 'define'");
-        varNames.push_back(varToken.lexue);
-        
-        // Handle define soLuong == 3, i as number or define soLuong = 3
+        varNames.push_back(varToken.lexeme);
+
         if (match({TokenType::EQUAL, TokenType::ASSIGN})) {
             skipNewlines();
             initVal = parseExpression();
@@ -169,7 +175,7 @@ std::shared_ptr<StmtAST> Parser::parseDefine() {
         isArray = true;
     }
 
-    return std::make_shared<VarDefineStmtAST>(varNames, typeToken.lexue, isArray, initVal);
+    return std::make_shared<VarDefineStmtAST>(varNames, typeToken.lexeme, isArray, initVal);
 }
 
 std::shared_ptr<StmtAST> Parser::parseAssignOrCall() {
@@ -311,7 +317,7 @@ std::shared_ptr<ExprAST> Parser::parseExpression() {
 std::shared_ptr<ExprAST> Parser::parseLogicalOr() {
     std::shared_ptr<ExprAST> expr = parseLogicalAnd();
     while (match({TokenType::KEYWORD_OR})) {
-        std::string op = previous().lexue;
+        std::string op = previous().lexeme;
         skipNewlines();
         std::shared_ptr<ExprAST> right = parseLogicalAnd();
         expr = std::make_shared<BinaryExprAST>(op, expr, right);
@@ -322,7 +328,7 @@ std::shared_ptr<ExprAST> Parser::parseLogicalOr() {
 std::shared_ptr<ExprAST> Parser::parseLogicalAnd() {
     std::shared_ptr<ExprAST> expr = parseEquality();
     while (match({TokenType::KEYWORD_AND})) {
-        std::string op = previous().lexue;
+        std::string op = previous().lexeme;
         skipNewlines();
         std::shared_ptr<ExprAST> right = parseEquality();
         expr = std::make_shared<BinaryExprAST>(op, expr, right);
@@ -333,7 +339,7 @@ std::shared_ptr<ExprAST> Parser::parseLogicalAnd() {
 std::shared_ptr<ExprAST> Parser::parseEquality() {
     std::shared_ptr<ExprAST> expr = parseComparison();
     while (match({TokenType::EQUAL, TokenType::NOT_EQUAL})) {
-        std::string op = previous().lexue;
+        std::string op = previous().lexeme;
         skipNewlines();
         std::shared_ptr<ExprAST> right = parseComparison();
         expr = std::make_shared<BinaryExprAST>(op, expr, right);
@@ -344,7 +350,7 @@ std::shared_ptr<ExprAST> Parser::parseEquality() {
 std::shared_ptr<ExprAST> Parser::parseComparison() {
     std::shared_ptr<ExprAST> expr = parseTerm();
     while (match({TokenType::GREATER, TokenType::GREATER_EQUAL, TokenType::LESS, TokenType::LESS_EQUAL})) {
-        std::string op = previous().lexue;
+        std::string op = previous().lexeme;
         skipNewlines();
         std::shared_ptr<ExprAST> right = parseTerm();
         expr = std::make_shared<BinaryExprAST>(op, expr, right);
@@ -355,7 +361,7 @@ std::shared_ptr<ExprAST> Parser::parseComparison() {
 std::shared_ptr<ExprAST> Parser::parseTerm() {
     std::shared_ptr<ExprAST> expr = parseFactor();
     while (match({TokenType::PLUS, TokenType::MINUS})) {
-        std::string op = previous().lexue;
+        std::string op = previous().lexeme;
         skipNewlines();
         std::shared_ptr<ExprAST> right = parseFactor();
         expr = std::make_shared<BinaryExprAST>(op, expr, right);
@@ -366,7 +372,7 @@ std::shared_ptr<ExprAST> Parser::parseTerm() {
 std::shared_ptr<ExprAST> Parser::parseFactor() {
     std::shared_ptr<ExprAST> expr = parsePrimary();
     while (match({TokenType::STAR, TokenType::SLASH})) {
-        std::string op = previous().lexue;
+        std::string op = previous().lexeme;
         skipNewlines();
         std::shared_ptr<ExprAST> right = parsePrimary();
         expr = std::make_shared<BinaryExprAST>(op, expr, right);
@@ -378,11 +384,11 @@ std::shared_ptr<ExprAST> Parser::parsePrimary() {
     skipNewlines();
 
     if (match({TokenType::NUMBER_LITERAL})) {
-        return std::make_shared<NumberExprAST>(std::stod(previous().lexue));
+        return std::make_shared<NumberExprAST>(std::stod(previous().lexeme));
     }
 
     if (match({TokenType::STRING_LITERAL})) {
-        return std::make_shared<StringExprAST>(previous().lexue);
+        return std::make_shared<StringExprAST>(previous().lexeme);
     }
 
     if (match({TokenType::KEYWORD_TRUE})) {
@@ -403,7 +409,7 @@ std::shared_ptr<ExprAST> Parser::parsePrimary() {
     }
 
     if (match({TokenType::IDENTIFIER, TokenType::KEYWORD_NUMBER, TokenType::KEYWORD_STRING, TokenType::KEYWORD_BOOLEAN})) {
-        std::string name = previous().lexue;
+        std::string name = previous().lexeme;
         std::shared_ptr<ExprAST> expr = std::make_shared<VariableExprAST>(name);
 
         while (true) {
@@ -430,7 +436,7 @@ std::shared_ptr<ExprAST> Parser::parsePrimary() {
                 expr = std::make_shared<ArrayAccessExprAST>(expr, indexExpr);
             } else if (match({TokenType::DOT})) {
                 Token memberToken = consume(TokenType::IDENTIFIER, "Expected member name after '.'");
-                expr = std::make_shared<MemberAccessExprAST>(expr, memberToken.lexue);
+                expr = std::make_shared<MemberAccessExprAST>(expr, memberToken.lexeme);
             } else {
                 break;
             }
@@ -447,5 +453,5 @@ std::shared_ptr<ExprAST> Parser::parsePrimary() {
         return std::make_shared<CallExprAST>("group", std::vector<std::shared_ptr<ExprAST>>{expr});
     }
 
-    throw std::runtime_error("Parser Error on line " + std::to_string(peek().line) + ": Unexpected expression token '" + peek().lexue + "'");
+    throw std::runtime_error("Parser Error on line " + std::to_string(peek().line) + ": Unexpected expression token '" + peek().lexeme + "'");
 }

@@ -26,6 +26,7 @@ private:
     Token scanNumber();
     Token scanIdentifierOrKeyword();
     Token scanString();
+    bool isSmartQuote(size_t i) const;
 };
 
 #endif // LEXER_HPP

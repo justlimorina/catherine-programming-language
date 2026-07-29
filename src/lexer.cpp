@@ -46,6 +46,13 @@ bool Lexer::isAtEnd() const {
     return pos >= source.length();
 }
 
+bool Lexer::isSmartQuote(size_t i) const {
+    return i + 2 < source.length() &&
+           (unsigned char)source[i] == 0xE2 &&
+           (unsigned char)source[i+1] == 0x80 &&
+           ((unsigned char)source[i+2] == 0x9C || (unsigned char)source[i+2] == 0x9D);
+}
+
 void Lexer::skipWhitespaceAndComments() {
     while (!isAtEnd()) {
         char c = peek();
@@ -86,13 +93,9 @@ Token Lexer::scanIdentifierOrKeyword() {
 }
 
 Token Lexer::scanString() {
-    // Skip opening quote " or UTF-8 smart quote “
     if (source[pos] == '"') {
         advance();
-    } else if (pos + 2 < source.length() &&
-               (unsigned char)source[pos] == 0xE2 &&
-               (unsigned char)source[pos+1] == 0x80 &&
-               ((unsigned char)source[pos+2] == 0x9C || (unsigned char)source[pos+2] == 0x9D)) {
+    } else if (isSmartQuote(pos)) {
         pos += 3;
     }
 
@@ -102,10 +105,7 @@ Token Lexer::scanString() {
         if (c == '"') {
             break;
         }
-        // Handle closing UTF-8 smart quote ”
-        if ((unsigned char)c == 0xE2 && pos + 2 < source.length() &&
-            (unsigned char)source[pos+1] == 0x80 &&
-            ((unsigned char)source[pos+2] == 0x9C || (unsigned char)source[pos+2] == 0x9D)) {
+        if (isSmartQuote(pos)) {
             break;
         }
         if (c == '\n') currentLine++;
@@ -118,10 +118,7 @@ Token Lexer::scanString() {
     if (!isAtEnd()) {
         if (peek() == '"') {
             advance();
-        } else if (pos + 2 < source.length() &&
-                   (unsigned char)source[pos] == 0xE2 &&
-                   (unsigned char)source[pos+1] == 0x80 &&
-                   ((unsigned char)source[pos+2] == 0x9C || (unsigned char)source[pos+2] == 0x9D)) {
+        } else if (isSmartQuote(pos)) {
             pos += 3;
         }
     }
@@ -156,9 +153,7 @@ std::vector<Token> Lexer::tokenize() {
         }
 
         // Handle string quotes " or UTF-8 smart quotes “
-        if (c == '"' || ((unsigned char)c == 0xE2 && pos + 2 < source.length() &&
-                         (unsigned char)source[pos+1] == 0x80 &&
-                         ((unsigned char)source[pos+2] == 0x9C || (unsigned char)source[pos+2] == 0x9D))) {
+        if (c == '"' || isSmartQuote(pos)) {
             tokens.push_back(scanString());
             continue;
         }

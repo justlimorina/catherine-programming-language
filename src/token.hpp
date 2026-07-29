@@ -69,11 +69,11 @@ enum class TokenType {
 // Struct representing a single Token
 struct Token {
     TokenType type;
-    std::string lexue;  // Actual text content
-    int line;           // Line number in source file
+    std::string lexeme;
+    int line;
 
     Token(TokenType t, std::string lex, int l)
-        : type(t), lexue(lex), line(l) {}
+        : type(t), lexeme(lex), line(l) {}
 };
 
 // Converts a TokenType enum value to a human-readable string

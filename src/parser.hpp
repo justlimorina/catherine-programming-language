@@ -30,6 +30,9 @@ private:
     // Statement parsers
     std::shared_ptr<StmtAST> parseStatement();
     std::shared_ptr<StmtAST> parseDefine();
+    std::shared_ptr<StmtAST> parseStructDef();
+    std::shared_ptr<StmtAST> parseFuncDef();
+    std::shared_ptr<StmtAST> parseVarDef();
     std::shared_ptr<StmtAST> parseEcho();
     std::shared_ptr<StmtAST> parseListen();
     std::shared_ptr<StmtAST> parseIf();
