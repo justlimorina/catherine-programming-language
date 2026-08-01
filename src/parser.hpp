@@ -50,6 +50,7 @@ private:
     std::shared_ptr<ExprAST> parseComparison();
     std::shared_ptr<ExprAST> parseTerm();
     std::shared_ptr<ExprAST> parseFactor();
+    std::shared_ptr<ExprAST> parseUnary();
     std::shared_ptr<ExprAST> parsePrimary();
 };
 

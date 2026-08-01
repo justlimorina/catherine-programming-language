@@ -63,24 +63,27 @@ std::shared_ptr<StmtAST> Parser::parseStatement() {
     skipNewlines();
     if (isAtEnd()) return nullptr;
 
-    if (match({TokenType::KEYWORD_DEFINE})) return parseDefine();
-    if (match({TokenType::KEYWORD_ECHO})) return parseEcho();
-    if (match({TokenType::KEYWORD_LISTEN})) return parseListen();
-    if (match({TokenType::KEYWORD_IF})) return parseIf();
-    if (match({TokenType::KEYWORD_WHILE})) return parseWhile();
-    if (match({TokenType::KEYWORD_UNTIL})) return parseUntil();
-    if (match({TokenType::KEYWORD_FOR})) return parseFor();
-    if (match({TokenType::KEYWORD_REPEAT})) return parseRepeat();
-    if (match({TokenType::KEYWORD_STOP})) return std::make_shared<StopStmtAST>();
-    if (match({TokenType::KEYWORD_SKIP})) return std::make_shared<SkipStmtAST>();
-    if (match({TokenType::KEYWORD_CLEAR})) return std::make_shared<ClearStmtAST>();
-
-    if (check(TokenType::IDENTIFIER)) {
-        return parseAssignOrCall();
+    int line = peek().line;
+    std::shared_ptr<StmtAST> stmt;
+    if (match({TokenType::KEYWORD_DEFINE})) stmt = parseDefine();
+    else if (match({TokenType::KEYWORD_ECHO})) stmt = parseEcho();
+    else if (match({TokenType::KEYWORD_LISTEN})) stmt = parseListen();
+    else if (match({TokenType::KEYWORD_IF})) stmt = parseIf();
+    else if (match({TokenType::KEYWORD_WHILE})) stmt = parseWhile();
+    else if (match({TokenType::KEYWORD_UNTIL})) stmt = parseUntil();
+    else if (match({TokenType::KEYWORD_FOR})) stmt = parseFor();
+    else if (match({TokenType::KEYWORD_REPEAT})) stmt = parseRepeat();
+    else if (match({TokenType::KEYWORD_STOP})) stmt = std::make_shared<StopStmtAST>();
+    else if (match({TokenType::KEYWORD_SKIP})) stmt = std::make_shared<SkipStmtAST>();
+    else if (match({TokenType::KEYWORD_CLEAR})) stmt = std::make_shared<ClearStmtAST>();
+    else if (check(TokenType::IDENTIFIER)) stmt = parseAssignOrCall();
+    else {
+        advance();
+        return nullptr;
     }
 
-    advance();
-    return nullptr;
+    stmt->line = line;
+    return stmt;
 }
 
 std::shared_ptr<StmtAST> Parser::parseDefine() {
@@ -370,14 +373,23 @@ std::shared_ptr<ExprAST> Parser::parseTerm() {
 }
 
 std::shared_ptr<ExprAST> Parser::parseFactor() {
-    std::shared_ptr<ExprAST> expr = parsePrimary();
+    std::shared_ptr<ExprAST> expr = parseUnary();
     while (match({TokenType::STAR, TokenType::SLASH})) {
         std::string op = previous().lexeme;
         skipNewlines();
-        std::shared_ptr<ExprAST> right = parsePrimary();
+        std::shared_ptr<ExprAST> right = parseUnary();
         expr = std::make_shared<BinaryExprAST>(op, expr, right);
     }
     return expr;
+}
+
+std::shared_ptr<ExprAST> Parser::parseUnary() {
+    skipNewlines();
+    if (match({TokenType::MINUS})) {
+        std::shared_ptr<ExprAST> operand = parseUnary();
+        return std::make_shared<BinaryExprAST>("-", std::make_shared<NumberExprAST>(0), operand);
+    }
+    return parsePrimary();
 }
 
 std::shared_ptr<ExprAST> Parser::parsePrimary() {

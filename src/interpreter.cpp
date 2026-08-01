@@ -144,10 +144,14 @@ Value Interpreter::evaluate(const std::shared_ptr<ExprAST>& expr, std::shared_pt
         Value arrVal = evaluate(arrAcc->arrayExpr, env);
         Value idxVal = evaluate(arrAcc->indexExpr, env);
         int idx = static_cast<int>(idxVal.numberValue);
-        if (arrVal.type == ValueType::ARRAY && idx >= 0 && idx < static_cast<int>(arrVal.arrayValue.size())) {
-            return arrVal.arrayValue[idx];
+        if (arrVal.type != ValueType::ARRAY) {
+            throw std::runtime_error("Runtime Error: Cannot index a non-array value");
         }
-        return Value();
+        if (idx < 0 || idx >= static_cast<int>(arrVal.arrayValue.size())) {
+            throw std::runtime_error("Runtime Error: Array index " + std::to_string(idx) +
+                                     " out of bounds (array size " + std::to_string(arrVal.arrayValue.size()) + ")");
+        }
+        return arrVal.arrayValue[idx];
     }
 
     if (auto memAcc = std::dynamic_pointer_cast<MemberAccessExprAST>(expr)) {
@@ -204,10 +208,30 @@ Value Interpreter::evaluate(const std::shared_ptr<ExprAST>& expr, std::shared_pt
             }
             return Value(leftVal.numberValue != rightVal.numberValue);
         }
-        if (bin->op == "<") return Value(leftVal.numberValue < rightVal.numberValue);
-        if (bin->op == ">") return Value(leftVal.numberValue > rightVal.numberValue);
-        if (bin->op == "<=") return Value(leftVal.numberValue <= rightVal.numberValue);
-        if (bin->op == ">=") return Value(leftVal.numberValue >= rightVal.numberValue);
+        if (bin->op == "<") {
+            if (leftVal.type == ValueType::STRING || rightVal.type == ValueType::STRING) {
+                return Value(leftVal.toString() < rightVal.toString());
+            }
+            return Value(leftVal.numberValue < rightVal.numberValue);
+        }
+        if (bin->op == ">") {
+            if (leftVal.type == ValueType::STRING || rightVal.type == ValueType::STRING) {
+                return Value(leftVal.toString() > rightVal.toString());
+            }
+            return Value(leftVal.numberValue > rightVal.numberValue);
+        }
+        if (bin->op == "<=") {
+            if (leftVal.type == ValueType::STRING || rightVal.type == ValueType::STRING) {
+                return Value(leftVal.toString() <= rightVal.toString());
+            }
+            return Value(leftVal.numberValue <= rightVal.numberValue);
+        }
+        if (bin->op == ">=") {
+            if (leftVal.type == ValueType::STRING || rightVal.type == ValueType::STRING) {
+                return Value(leftVal.toString() >= rightVal.toString());
+            }
+            return Value(leftVal.numberValue >= rightVal.numberValue);
+        }
 
         if (bin->op == "and") return Value(leftVal.isTruthy() && rightVal.isTruthy());
         if (bin->op == "or") return Value(leftVal.isTruthy() || rightVal.isTruthy());
@@ -279,9 +303,19 @@ void Interpreter::assignTarget(const std::shared_ptr<ExprAST>& target, const Val
     }
 }
 
+namespace {
+
+struct LineAnnotatedError : std::runtime_error {
+    LineAnnotatedError(int line, const std::string& msg)
+        : std::runtime_error("Line " + std::to_string(line) + ": " + msg) {}
+};
+
+} // namespace
+
 void Interpreter::execute(const std::shared_ptr<StmtAST>& stmt, std::shared_ptr<Environment> env) {
     if (!stmt) return;
 
+    try {
     if (auto def = std::dynamic_pointer_cast<VarDefineStmtAST>(stmt)) {
         Value initVal = def->initialValue ? evaluate(def->initialValue, env) : Value();
 
@@ -438,6 +472,11 @@ void Interpreter::execute(const std::shared_ptr<StmtAST>& stmt, std::shared_ptr<
     if (std::dynamic_pointer_cast<ClearStmtAST>(stmt)) {
         std::cout << "\033[2J\033[1;1H" << std::flush;
         return;
+    }
+    } catch (const LineAnnotatedError&) {
+        throw;
+    } catch (const std::runtime_error& e) {
+        throw LineAnnotatedError(stmt->line, e.what());
     }
 }
 

@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/catherine.dir/link.d CMakeFiles/catherine.dir/src/token.cpp.o CMakeFiles/catherine.dir/src/lexer.cpp.o CMakeFiles/catherine.dir/src/ast.cpp.o CMakeFiles/catherine.dir/src/parser.cpp.o CMakeFiles/catherine.dir/src/interpreter.cpp.o CMakeFiles/catherine.dir/src/main.cpp.o -o catherine

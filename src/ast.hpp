@@ -9,6 +9,7 @@
 // Base class for all Abstract Syntax Tree (AST) nodes
 class ASTNode {
 public:
+    int line = 0;
     virtual ~ASTNode() = default;
     virtual void print(int indent = 0) const = 0;
 };

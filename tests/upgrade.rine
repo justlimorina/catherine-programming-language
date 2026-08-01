@@ -1,0 +1,17 @@
+define a = -5 as number
+echo "unary on define: !{a}"
+echo "unary multiply: !{calc(-3 * 2)}"
+echo "unary with parens: !{calc(-(5 + 2))}"
+echo "double unary: !{calc(--3)}"
+echo "unary in calc: !{calc(-a)}"
+
+define s1, s2, s3 as string
+define cmp as boolean
+s1 = "abc"
+s2 = "abd"
+s3 = "banana"
+cmp = "apple"
+echo "string less: !{s1 < s2}"
+echo "string greater: !{s3 > cmp}"
+echo "string less_equal: !{s1 <= s2}"
+echo "string greater_equal: !{s1 >= s2}"

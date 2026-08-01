@@ -1,0 +1,5 @@
+define arr as number[]
+define x as number
+
+x = arr[5]
+echo "not reached"
