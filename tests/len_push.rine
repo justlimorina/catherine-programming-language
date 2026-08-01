@@ -1,0 +1,10 @@
+define arr = [10, 20, 30] as number[]
+echo "len of arr: !{len(arr)}"
+arr = push(arr, 4)
+arr = push(arr, 5)
+echo "after push: !{arr}"
+echo "len after push: !{len(arr)}"
+
+define s as string
+s = "hello"
+echo "len of string: !{len(s)}"

@@ -100,6 +100,19 @@ Value Interpreter::callBuiltinOrUserFunction(const std::string& name, const std:
         return Value(std::fmod(args[0].numberValue, args[1].numberValue));
     }
 
+    // Built-in array/string utilities
+    if (name == "len" && !args.empty()) {
+        if (args[0].type == ValueType::ARRAY) return Value(static_cast<double>(args[0].arrayValue.size()));
+        if (args[0].type == ValueType::STRING) return Value(static_cast<double>(args[0].stringValue.length()));
+        throw std::runtime_error("Runtime Error: len() expects an array or a string");
+    }
+    if (name == "push" && args.size() >= 2) {
+        if (args[0].type != ValueType::ARRAY) throw std::runtime_error("Runtime Error: push() expects an array as first argument");
+        std::vector<Value> result = args[0].arrayValue;
+        result.push_back(args[1]);
+        return Value(result);
+    }
+
     // User-defined function
     auto it = functions.find(name);
     if (it != functions.end()) {
@@ -134,6 +147,14 @@ Value Interpreter::evaluate(const std::shared_ptr<ExprAST>& expr, std::shared_pt
 
     if (auto b = std::dynamic_pointer_cast<BooleanExprAST>(expr)) {
         return Value(b->value);
+    }
+
+    if (auto arrLit = std::dynamic_pointer_cast<ArrayLiteralExprAST>(expr)) {
+        std::vector<Value> values;
+        for (const auto& el : arrLit->elements) {
+            values.push_back(evaluate(el, env));
+        }
+        return Value(values);
     }
 
     if (auto var = std::dynamic_pointer_cast<VariableExprAST>(expr)) {

@@ -411,6 +411,20 @@ std::shared_ptr<ExprAST> Parser::parsePrimary() {
         return std::make_shared<BooleanExprAST>(false);
     }
 
+    if (match({TokenType::LBRACKET})) {
+        std::vector<std::shared_ptr<ExprAST>> elements;
+        skipNewlines();
+        if (!check(TokenType::RBRACKET)) {
+            do {
+                skipNewlines();
+                elements.push_back(parseExpression());
+                skipNewlines();
+            } while (match({TokenType::COMMA}));
+        }
+        consume(TokenType::RBRACKET, "Expected ']' after array literal");
+        return std::make_shared<ArrayLiteralExprAST>(elements);
+    }
+
     if (match({TokenType::KEYWORD_CALC})) {
         consume(TokenType::LPAREN, "Expected '(' after 'calc'");
         skipNewlines();

@@ -99,6 +99,16 @@ public:
     void print(int indent = 0) const override;
 };
 
+// Array Literal Expression (e.g., [1, 2, 3], ["a", 5, true])
+class ArrayLiteralExprAST : public ExprAST {
+public:
+    std::vector<std::shared_ptr<ExprAST>> elements;
+
+    explicit ArrayLiteralExprAST(std::vector<std::shared_ptr<ExprAST>> els)
+        : elements(std::move(els)) {}
+    void print(int indent = 0) const override;
+};
+
 // ------------------- STATEMENTS -------------------
 
 // Variable Definition Statement (e.g., define a, b as number, define sv as Student[])

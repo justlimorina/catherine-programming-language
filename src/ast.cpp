@@ -58,6 +58,16 @@ void CallExprAST::print(int indent) const {
     }
 }
 
+void ArrayLiteralExprAST::print(int indent) const {
+    printIndent(indent);
+    std::cout << "ArrayLiteralExpr: [\n";
+    for (const auto& el : elements) {
+        el->print(indent + 1);
+    }
+    printIndent(indent);
+    std::cout << "]\n";
+}
+
 void VarDefineStmtAST::print(int indent) const {
     printIndent(indent);
     std::cout << "VarDefineStmt (Type: " << typeName << (isArray ? "[]" : "") << "): ";

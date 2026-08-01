@@ -1,0 +1,9 @@
+define x = [1, 2, 3] as number[]
+echo "literal: !{x}"
+echo "element[0]: !{x[0]}"
+echo "sum via calc: !{calc(x[0] + x[1] + x[2])}"
+
+define mix = [1, "hai", true] as number[]
+echo "mixed types: !{mix}"
+
+echo "empty: !{[]}"
