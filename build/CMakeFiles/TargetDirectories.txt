@@ -1,3 +1,0 @@
-/home/limorina/Projects/catherine-programming-language/build/CMakeFiles/catherine.dir
-/home/limorina/Projects/catherine-programming-language/build/CMakeFiles/edit_cache.dir
-/home/limorina/Projects/catherine-programming-language/build/CMakeFiles/rebuild_cache.dir
