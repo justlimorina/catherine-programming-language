@@ -12,10 +12,11 @@
    ```
 2. **Run Catherine `.rine` source files**:
    ```bash
-   ./catherine calculator.rine
-   ./catherine phuogntrinhbac2.rine
-   ./catherine example_for_struct_array.rine
+   ./build/catherine calculator.rine
+   ./build/catherine phuogntrinhbac2.rine
+   ./build/catherine example_for_struct_array.rine
    ```
+3. **Interactive REPL**: run `./build/catherine` with no file for a live prompt. Arrow keys navigate and browse history; multi-line blocks (`if`, `for`, `func`, `struct`) wait until their braces balance, then run.
 
 ---
 
@@ -38,6 +39,7 @@
   define sv as Student[]    // Array of Student structs
   define list as number[]   // Array of numbers
   ```
+* **Array Literal**: initialize arrays inline — `define x = [1, 2, 3] as number[]`. Arrays are dynamic: elements may mix types (`[1, "two", true]`) and indexes auto-expand on assignment (`x[5] = 1`).
 
 ---
 
@@ -94,3 +96,16 @@ if d == 0 {
 
 * **Syntax**: `define func <func_name>(<params...>) as <return_type> { ... }`
 * **Return Value**: Assigning a value to `<func_name>` inside the function block sets its return value.
+
+---
+
+### 7. Numbers, Strings & Built-in Functions
+
+* **Negative numbers**: `-5`, `-a`, `-(a + b)` work directly — no need for `0 - b`.
+* **String comparison**: strings support `<`, `>`, `<=`, `>=` (alphabetical) as well as `==` / `!=`.
+* **`len(x)`**: number of elements in an array, or length of a string.
+* **`push(arr, x)`**: returns a new array with `x` appended — use `arr = push(arr, x)`.
+* **`calc(expr)`**: evaluates an arithmetic expression (handy inside `!{ }` interpolation).
+* **`sqrt(x)`**: square root.
+* **`sum/sub/multi/div(a, b)`**: arithmetic helpers; also `idiv` (integer division) and `mod` (remainder).
+* **Errors**: runtime errors report the offending line, e.g. `Line 3: Runtime Error: Division by zero`.

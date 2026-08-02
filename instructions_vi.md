@@ -12,10 +12,11 @@
    ```
 2. **Thực thi file mã nguồn `.rine`**:
    ```bash
-   ./catherine calculator.rine
-   ./catherine phuogntrinhbac2.rine
-   ./catherine example_for_struct_array.rine
+   ./build/catherine calculator.rine
+   ./build/catherine phuogntrinhbac2.rine
+   ./build/catherine example_for_struct_array.rine
    ```
+3. **REPL tương tác**: chạy `./build/catherine` không kèm file để vào môi trường gõ-chạy-liền. Phím mũi tên để di chuyển và lướt lịch sử; khối nhiều dòng (`if`, `for`, `func`, `struct`) chờ đến khi cân bằng `{}` mới chạy.
 
 ---
 
@@ -38,6 +39,7 @@
   define sv as Student[]    // Mảng chứa danh sách các sinh viên
   define list as number[]   // Mảng chứa danh sách số
   ```
+* **Array Literal**: khởi tạo mảng ngay trong dòng — `define x = [1, 2, 3] as number[]`. Mảng động: các phần tử có thể trộn kiểu (`[1, "hai", true]`) và index tự mở rộng khi gán (`x[5] = 1`).
 
 ---
 
@@ -94,3 +96,16 @@ if d == 0 {
 
 * **Cú pháp**: `define func <tên_hàm>(<tham_số...>) as <kiểu_trả_về> { ... }`
 * **Trả về giá trị**: Gán giá trị cho `<tên_hàm>` bên trong khối lệnh để xác định giá trị trả về của hàm.
+
+---
+
+### 7. Số, Chuỗi & Hàm có sẵn (Built-in)
+
+* **Số âm**: `-5`, `-a`, `-(a + b)` dùng trực tiếp được — không cần viết `0 - b`.
+* **So sánh chuỗi**: chuỗi hỗ trợ `<`, `>`, `<=`, `>=` (so theo thứ tự bảng chữ cái) cùng `==` / `!=`.
+* **`len(x)`**: số phần tử của mảng, hoặc độ dài chuỗi.
+* **`push(arr, x)`**: trả về mảng mới đã thêm `x` vào cuối — dùng `arr = push(arr, x)`.
+* **`calc(expr)`**: tính biểu thức số học (tiện dùng trong `!{ }`).
+* **`sqrt(x)`**: căn bậc hai.
+* **`sum/sub/multi/div(a, b)`**: phép tính hỗ trợ; thêm `idiv` (chia lấy phần nguyên) và `mod` (chia lấy dư).
+* **Lỗi**: lỗi runtime báo kèm số dòng, ví dụ `Line 3: Runtime Error: Division by zero`.

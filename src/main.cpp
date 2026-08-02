@@ -6,6 +6,10 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <termios.h>
+#include <unistd.h>
+#include <csignal>
+#include <cstdlib>
 
 // Returns true when the accumulated input looks complete (balanced braces,
 // parens, brackets, and no unterminated string). Used by the REPL to decide
@@ -35,12 +39,112 @@ static void runSource(Interpreter& interpreter, const std::string& source) {
     interpreter.interpret(statements);
 }
 
+// ---- Minimal terminal line editor (readline-lite, no external dependency) ----
+
+static termios g_originalTermios;
+static bool g_termiosSaved = false;
+
+static void restoreTermios() {
+    if (g_termiosSaved) tcsetattr(STDIN_FILENO, TCSANOW, &g_originalTermios);
+}
+
+static void setRawMode(bool enable) {
+    if (enable) {
+        termios raw = g_originalTermios;
+        raw.c_lflag &= ~(ICANON | ECHO);
+        raw.c_cc[VMIN] = 1;
+        raw.c_cc[VTIME] = 0;
+        tcsetattr(STDIN_FILENO, TCSANOW, &raw);
+    } else {
+        restoreTermios();
+    }
+}
+
+// Reads one line with arrow-key navigation and history. Falls back to plain
+// getline when stdin is not a terminal (piped input, tests).
+static std::string readLineRaw(const std::string& prompt, std::vector<std::string>& history,
+                               size_t& histIndex, bool& eof) {
+    if (!isatty(STDIN_FILENO)) {
+        std::string line;
+        if (!std::getline(std::cin, line)) { eof = true; return ""; }
+        return line;
+    }
+
+    if (!g_termiosSaved) {
+        tcgetattr(STDIN_FILENO, &g_originalTermios);
+        g_termiosSaved = true;
+    }
+    setRawMode(true);
+
+    std::string buffer;
+    size_t cursor = 0;
+    std::cout << prompt << std::flush;
+
+    auto refresh = [&]() {
+        std::cout << "\r\x1b[K" << prompt << buffer;
+        size_t back = buffer.size() - cursor;
+        if (back > 0) std::cout << "\x1b[" << back << "D";
+        std::cout << std::flush;
+    };
+
+    bool done = false;
+    while (!done) {
+        char c;
+        if (read(STDIN_FILENO, &c, 1) != 1) { eof = true; break; }
+
+        if (c == '\n' || c == '\r') {
+            std::cout << "\r\x1b[K" << std::endl;
+            done = true;
+        } else if (c == 127 || c == 8) {          // Backspace
+            if (cursor > 0) { buffer.erase(cursor - 1, 1); cursor--; refresh(); }
+        } else if (c == 4) {                       // Ctrl-D: exit on empty line
+            if (buffer.empty()) { eof = true; std::cout << std::endl; done = true; }
+        } else if (c == '\x1b') {                  // Escape sequence (arrow keys, etc.)
+            char c2, c3;
+            if (read(STDIN_FILENO, &c2, 1) != 1 || c2 != '[') continue;
+            if (read(STDIN_FILENO, &c3, 1) != 1) continue;
+            if (c3 == 'A') {                       // Up: history
+                if (histIndex > 0) { histIndex--; buffer = history[histIndex]; cursor = buffer.size(); refresh(); }
+            } else if (c3 == 'B') {                // Down: forward history
+                if (histIndex < history.size()) {
+                    histIndex++;
+                    if (histIndex == history.size()) { buffer.clear(); cursor = 0; }
+                    else { buffer = history[histIndex]; cursor = buffer.size(); }
+                    refresh();
+                }
+            } else if (c3 == 'C') {                // Right
+                if (cursor < buffer.size()) { cursor++; std::cout << "\x1b[C" << std::flush; }
+            } else if (c3 == 'D') {                // Left
+                if (cursor > 0) { cursor--; std::cout << "\x1b[D" << std::flush; }
+            } else {                               // Home/End/etc.: discard rest of the sequence
+                char last = c3;
+                while (last < 0x40 || last > 0x7e) {
+                    if (read(STDIN_FILENO, &last, 1) != 1) break;
+                }
+            }
+        } else if (c >= 32 && c <= 126) {          // Printable character
+            buffer.insert(cursor, 1, c);
+            cursor++;
+            std::cout << c;
+            size_t back = buffer.size() - cursor;
+            if (back > 0) std::cout << "\x1b[" << back << "D";
+            std::cout << std::flush;
+        }
+    }
+
+    setRawMode(false);
+    return buffer;
+}
+
 static void runRepl(Interpreter& interpreter) {
     std::cout << "Catherine REPL — write code, it runs as you complete each statement. Ctrl-D to exit.\n";
-    std::string buffer, line;
+    std::vector<std::string> history;
+    std::string buffer;
     while (true) {
-        std::cout << (buffer.empty() ? "rine> " : "  ..> ");
-        if (!std::getline(std::cin, line)) {
+        size_t histIndex = history.size();
+        bool eof = false;
+        std::string line = readLineRaw(buffer.empty() ? "rine> " : "  ..> ", history, histIndex, eof);
+        if (eof) {
             if (!buffer.empty()) {
                 try {
                     runSource(interpreter, buffer);
@@ -51,6 +155,7 @@ static void runRepl(Interpreter& interpreter) {
             std::cout << std::endl;
             break;
         }
+        if (!line.empty()) history.push_back(line);
         buffer += line + "\n";
         if (!isCompleteInput(buffer)) continue;
         try {
@@ -63,6 +168,12 @@ static void runRepl(Interpreter& interpreter) {
 }
 
 int main(int argc, char* argv[]) {
+    // Make sure the terminal is not left in raw mode if the user hits Ctrl-C.
+    std::signal(SIGINT, [](int) {
+        restoreTermios();
+        std::_Exit(130);
+    });
+
     Interpreter interpreter;
 
     if (argc > 1) {
