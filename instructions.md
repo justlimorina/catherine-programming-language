@@ -6,17 +6,19 @@
 
 ## 🚀 Build & Run
 
-1. **Build Catherine Interpreter**:
-   ```bash
-   ./build.sh
-   ```
-2. **Run Catherine `.rine` source files**:
-   ```bash
-   ./build/catherine calculator.rine
-   ./build/catherine phuogntrinhbac2.rine
-   ./build/catherine example_for_struct_array.rine
-   ```
-3. **Interactive REPL**: run `./build/catherine` with no file for a live prompt. Arrow keys navigate and browse history; multi-line blocks (`if`, `for`, `func`, `struct`) wait until their braces balance, then run.
+* **Linux / macOS**:
+  ```bash
+  ./build.sh
+  ./build/catherine calculator.rine
+  ```
+
+* **Windows (PowerShell / Command Prompt)**:
+  ```powershell
+  .\build.ps1        # or build.bat
+  .\build\Release\catherine.exe calculator.rine
+  ```
+
+* **Interactive REPL**: Run `catherine` (or `catherine.exe`) with no file argument for a live prompt. Cross-platform arrow key navigation and history are supported.
 
 ---
 

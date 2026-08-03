@@ -6,17 +6,19 @@
 
 ## 🚀 Biên dịch & Chạy dự án (Build & Run)
 
-1. **Biên dịch trình thông dịch Catherine**:
-   ```bash
-   ./build.sh
-   ```
-2. **Thực thi file mã nguồn `.rine`**:
-   ```bash
-   ./build/catherine calculator.rine
-   ./build/catherine phuogntrinhbac2.rine
-   ./build/catherine example_for_struct_array.rine
-   ```
-3. **REPL tương tác**: chạy `./build/catherine` không kèm file để vào môi trường gõ-chạy-liền. Phím mũi tên để di chuyển và lướt lịch sử; khối nhiều dòng (`if`, `for`, `func`, `struct`) chờ đến khi cân bằng `{}` mới chạy.
+* **Linux / macOS**:
+  ```bash
+  ./build.sh
+  ./build/catherine calculator.rine
+  ```
+
+* **Windows (PowerShell / Command Prompt)**:
+  ```powershell
+  .\build.ps1        # hoặc build.bat
+  .\build\Release\catherine.exe calculator.rine
+  ```
+
+* **REPL tương tác**: Chạy `catherine` (hoặc `catherine.exe`) không kèm tham số file để vào môi trường gõ-chạy-liền. Hỗ trợ di chuyển bằng phím mũi tên và xem lịch sử lệnh đa nền tảng.
 
 ---
 
